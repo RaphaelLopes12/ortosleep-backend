@@ -26,16 +26,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins(
-                "http://localhost:4200",
-                "https://localhost:4200",
-                "https://*.vercel.app",
-                "https://*.netlify.app",
-                "https://*.github.io",
-                "https://*.railway.app"
-            )
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
         });
 });
 
@@ -52,10 +45,18 @@ app.UseCors("AllowFrontend");
 app.UseAuthorization();
 app.MapControllers();
 
-using (var scope = app.Services.CreateScope())
+try 
 {
-    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    context.Database.EnsureCreated();
+    using (var scope = app.Services.CreateScope())
+    {
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        context.Database.EnsureCreated();
+        Console.WriteLine("✅ Banco de dados criado com sucesso!");
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"❌ Erro ao criar banco: {ex.Message}");
 }
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";

@@ -63,7 +63,7 @@ try
     {
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         context.Database.EnsureCreated();
-        Console.WriteLine("Banco de dados criado com sucesso!");
+        Console.WriteLine("✅ Banco de dados criado com sucesso!");
     }
 }
 catch (Exception ex)
@@ -72,14 +72,16 @@ catch (Exception ex)
 }
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5230";
-var host = Environment.GetEnvironmentVariable("HOST") ?? 
-           (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Production" ? "0.0.0.0" : "localhost");
+var isDevelopment = app.Environment.IsDevelopment();
+
+var host = isDevelopment ? "localhost" : "0.0.0.0";
 
 app.Urls.Clear();
 app.Urls.Add($"http://{host}:{port}");
 
-Console.WriteLine($"🚀 Ortosleep API rodando em http://{host}:{port}");
-Console.WriteLine($"📖 Swagger disponível em: http://{host}:{port}");
-Console.WriteLine($"🌍 Ambiente: {builder.Environment.EnvironmentName}");
+Console.WriteLine($"Ortosleep API rodando em http://{host}:{port}");
+Console.WriteLine($"Swagger disponível em: http://{host}:{port}");
+Console.WriteLine($"Ambiente: {app.Environment.EnvironmentName}");
+Console.WriteLine($"IsDevelopment: {isDevelopment}");
 
 app.Run();

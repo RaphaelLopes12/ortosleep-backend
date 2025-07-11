@@ -23,16 +23,29 @@ builder.Services.AddScoped<IPrecificacaoService, PrecificacaoService>();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend",
-        policy =>
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins(
+            "http://localhost:4200",              
+            "http://localhost:5230",              
+            "https://ortosleep-frontend.vercel.app",
+            "https://*.vercel.app"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials()
+        .SetIsOriginAllowed(origin => 
         {
-            policy.AllowAnyOrigin()
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
+            Console.WriteLine($"CORS Origin: {origin}");
+            return origin?.Contains("localhost") == true || 
+                   origin?.Contains("vercel.app") == true;
         });
+    });
 });
 
 var app = builder.Build();
+
+app.UseCors("AllowFrontend");
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>
@@ -41,7 +54,6 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = ""; 
 });
 
-app.UseCors("AllowFrontend");
 app.UseAuthorization();
 app.MapControllers();
 
@@ -51,21 +63,23 @@ try
     {
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         context.Database.EnsureCreated();
-        Console.WriteLine("✅ Banco de dados criado com sucesso!");
+        Console.WriteLine("Banco de dados criado com sucesso!");
     }
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"❌ Erro ao criar banco: {ex.Message}");
+    Console.WriteLine($"Erro ao criar banco: {ex.Message}");
 }
 
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-var host = Environment.GetEnvironmentVariable("HOST") ?? "0.0.0.0";
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5230";
+var host = Environment.GetEnvironmentVariable("HOST") ?? 
+           (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Production" ? "0.0.0.0" : "localhost");
 
 app.Urls.Clear();
 app.Urls.Add($"http://{host}:{port}");
 
 Console.WriteLine($"🚀 Ortosleep API rodando em http://{host}:{port}");
 Console.WriteLine($"📖 Swagger disponível em: http://{host}:{port}");
+Console.WriteLine($"🌍 Ambiente: {builder.Environment.EnvironmentName}");
 
 app.Run();
